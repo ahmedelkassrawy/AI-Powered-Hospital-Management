@@ -1,0 +1,10 @@
+langchain
+langgraph
+python-dotenv
+pydantic
+fastapi
+uvicorn
+streamlit
+sqlalchemy
+asyncio
+alembic
