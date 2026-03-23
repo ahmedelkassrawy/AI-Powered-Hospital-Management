@@ -111,7 +111,17 @@ async def check_patient_appointments(patient_id: int = 0) -> list[dict]:
             for appt in appointments
         ]
 
-@tool
+class PatientReq(BaseModel):
+    name: str
+    age: int
+    gender: str
+    phone_number: str
+    email: str
+    date_of_birth: str
+    address: str
+    medical_history: str
+
+@tool(args_schema=PatientReq)
 async def create_patient_record(
     name: str = "",
     age: int = 0,
@@ -139,9 +149,9 @@ async def create_patient_record(
         medical_history: Medical History of the patient
     """
     # NO input() - LLM must provide ALL args or ask user first
-    if not all([name, age, gender, phone_number, email, date_of_birth, address, medical_history]):
-        missing = [k for k, v in locals().items() if not v]
-        return {"error": f"Missing patient details: {', '.join(missing)}. Provide all before registering."}
+    # if not all([name, age, gender, phone_number, email, date_of_birth, address, medical_history]):
+    #     missing = [k for k, v in locals().items() if not v]
+    #     return {"error": f"Missing patient details: {', '.join(missing)}. Provide all before registering."}
 
     async with AsyncSessionLocal() as session:
         try:
@@ -169,8 +179,15 @@ async def create_patient_record(
             "message": "Patient record created successfully.",
         }
 
+class AppointmentReq(BaseModel):
+    patient_id: int
+    doctor_id: int
+    date: str
+    time: str
+    reason: str
+    is_emergency: bool
 
-@tool
+@tool(args_schema=AppointmentReq)
 async def book_appointment(
     patient_id: int,      # REQUIRED - from user or prior check_patient_appointments
     doctor_id: int,       # REQUIRED - from get_doctor_schedule
@@ -194,7 +211,6 @@ async def book_appointment(
         reason: User reason REQUIRED
         is_emergency: True ONLY for life-threatening
     """
-    # STRICT VALIDATION - catch hallucinations
     if patient_id <= 0:
         return {"error": "Patient ID required (e.g. 6). Ask user first."}
     if doctor_id <= 0:
@@ -352,9 +368,10 @@ If a user indicates they are new or do not have a Patient ID, execute this SOP b
 """
 
 checkpointer = MemorySaver()
+llm_with_tools = llm.bind_tools(tools, strict=True)
 
 agent = create_agent(
-    model=llm,
+    model=llm_with_tools,
     tools=tools,
     system_prompt=SYSTEM_PROMPT,
     checkpointer=checkpointer,
