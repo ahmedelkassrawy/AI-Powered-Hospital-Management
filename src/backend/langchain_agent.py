@@ -19,6 +19,7 @@ from src.database.model import Appointment, Doctor, Patient
 from config import get_settings
 from langchain_openrouter import ChatOpenRouter
 from langsmith import traceable
+from pydantic import BaseModel
 
 load_dotenv()
 settings = get_settings()
